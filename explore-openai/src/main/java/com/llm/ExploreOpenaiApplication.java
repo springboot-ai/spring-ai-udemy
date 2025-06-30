@@ -7,7 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({WeatherConfigProperties.class, CurrencyExchangeConfigProperties.class})
+@EnableConfigurationProperties({
+		WeatherConfigProperties.class,
+		CurrencyExchangeConfigProperties.class})
 public class ExploreOpenaiApplication {
 
 	public static void main(String[] args) {

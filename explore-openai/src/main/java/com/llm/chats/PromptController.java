@@ -4,6 +4,7 @@ import com.llm.dto.UserInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -21,7 +22,6 @@ public class PromptController {
 
     private static final Logger log = LoggerFactory.getLogger(PromptController.class);
     private final ChatClient chatClient;
-
     @Value("classpath:/prompt-templates/java-coding-assistant.st")
     private Resource systemTemplateMessage;
 
@@ -33,75 +33,71 @@ public class PromptController {
         this.chatClient = chatClientBuilder.build();
     }
 
-
     @PostMapping("/v1/prompts")
-    public String prompts(@RequestBody UserInput userInput) {
+    public String prompts(@RequestBody UserInput userInput){
         log.info("userInput : {} ", userInput);
+        var systemMessage = """
+                You are a helpful assistant, who can answer java based questions.
+                For any other questions, please respond with I don't know in a funny way!
+                """;
+        var sysMessage = new SystemMessage(systemTemplateMessage);
+        var userMessage = new UserMessage(userInput.prompt());
 
-//        var systemMessage = new SystemMessage("""
-//                You are a helpful assistant, who can content java based questions.
-//                For any other questions, please respond with I don't know in a funny way!
-//                """);
+        var promptMessage = new Prompt(List.of(sysMessage,
+//                new UserMessage("Whats My name ?"),
+//                new AssistantMessage("I dont know!"),
+//                new UserMessage("My name is Dilip"),
+                userMessage));
 
-        var systemMessage = new SystemMessage(systemTemplateMessage);
-        log.info("systemMessage : {} ", systemMessage);
-
-        var promptMessage = new Prompt(
-                List.of(
-                        systemMessage,
-//                        new UserMessage("Whats My name ?"),
-//                        new AssistantMessage("I dont know!"),
-//                        new UserMessage("My name is Dilip"),
-                        new UserMessage(userInput.prompt())
-                )
-        );
-
-        var requestSpec = chatClient.prompt(promptMessage);
-
-        var responseSpec = requestSpec.call();
-        log.info("responseSpec : {} ", responseSpec.chatResponse());
+        var responseSpec = chatClient.prompt(promptMessage).call();
         return responseSpec.content();
+
     }
 
 
     @PostMapping("/v1/prompts/{language}")
-    public String promptsByLanguage_V1(
+    public String promptsByLanguage(
             @PathVariable String language,
-            @RequestBody UserInput userInput) {
-        log.info("userInput : {} , language : {} ", userInput, language);
+            @RequestBody UserInput userInput
+    ){
+        log.info("userInput : {}, language : {} ", userInput, language);
+        var systemPromptTemplate = new SystemPromptTemplate(systemText);
+        var sysMessage = systemPromptTemplate.createMessage(Map.of("language", language));
 
-        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(systemText);
-        var systemMessage = systemPromptTemplate.createMessage(Map.of("language", language));
+        log.info("sysMessage : {} ", sysMessage);
 
-        log.info("systemMessage : {} ", systemMessage);
+        var userMessage = new UserMessage(userInput.prompt());
 
-        var promptMessage = new Prompt(
-                List.of(systemMessage,
-                        new UserMessage(userInput.prompt())));
+        var promptMessage = new Prompt(List.of(sysMessage,
+                userMessage));
 
-        var requestSpec = chatClient.prompt(promptMessage);
-
-        var responseSpec = requestSpec.call();
-        log.info("responseSpec : {} ", responseSpec.chatResponse());
+        var responseSpec = chatClient.prompt(promptMessage).call();
         return responseSpec.content();
+
     }
 
+
     @PostMapping("/v2/prompts/{language}")
-    public String promptsByLanguage_V2(
+    public Object promptsByLanguageV2(
             @PathVariable String language,
             @RequestBody UserInput userInput) {
-        log.info("userInput : {} , language : {} ", userInput, language);
+
+        log.info("userInput message : {} ", userInput);
 
         var requestSpec = chatClient
                 .prompt()
                 .user(userInput.prompt())
-                .system(promptSystemSpec -> promptSystemSpec
-                        .text(systemText)
-                        .param("language", language));
+                .system(promptSystemSpec ->
+                        promptSystemSpec.text(systemText)
+                                .param("language", language));
+
+        log.info("requestSpec : {} ", requestSpec);
 
         var responseSpec = requestSpec.call();
-        log.info("responseSpec : {} ", responseSpec.chatResponse());
+//        return responseSpec.chatResponse();
         return responseSpec.content();
+
     }
+
 
 }

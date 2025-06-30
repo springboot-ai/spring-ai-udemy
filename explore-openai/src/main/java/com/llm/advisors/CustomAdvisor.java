@@ -30,6 +30,7 @@ import java.util.Objects;
  * 3. Tracks performance metrics
  */
 public class CustomAdvisor implements CallAdvisor {
+//public class CustomAdvisor {
     private static final Logger log = LoggerFactory.getLogger(CustomAdvisor.class);
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -111,10 +112,10 @@ public class CustomAdvisor implements CallAdvisor {
         //        // 1. Capture start time for performance tracking
         Instant startTime = Instant.now();
 
-        var modifiedRequest = enhanceRequest(chatClientRequest);
+        var modifiedRequest = enhanceRequest(chatClientRequest); // Modified the Request
         log.info("Modified request: {}", modifiedRequest);
-        var originalResponse =  callAdvisorChain.nextCall(chatClientRequest);
+        var originalResponse =  callAdvisorChain.nextCall(chatClientRequest); // forwarding the call to the LLM
         Duration processingTime = Duration.between(startTime, Instant.now());
-        return Objects.requireNonNull(enhanceResponse(originalResponse, processingTime));
+        return Objects.requireNonNull(enhanceResponse(originalResponse, processingTime)); // modifying the response before sending to back to the contoller.
     }
 }

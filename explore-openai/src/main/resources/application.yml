@@ -5,19 +5,19 @@ spring:
   ai:
     openai:
       api-key: ${OPENAI_KEY}
-      chat: # By default its true, this triggers the autoconfiguration.
+      chat:
         options:
           model: gpt-4.1 #gpt-4.1, gpt-4o
           temperature: 0.7
-          max_completion_tokens: 2000
-          internal-tool-execution-enabled: true
+          max-completion-tokens: 2000
 logging:
   level:
     org:
       springframework:
         ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG
+
 weather:
-  api-key :
+  api-key : 
   api-url : http://api.weatherapi.com/v1
 
 currency-exchange:

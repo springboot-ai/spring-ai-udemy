@@ -33,7 +33,7 @@ public class AdvisorsChatController {
                 .prompt()
                 .advisors(new SimpleLoggerAdvisor())
                 .user(userInput.prompt())
-                .system(systemMessage)
+                 .system(systemMessage)
                 .call();
 
         log.info("responseSpec : {} ", responseSpec);

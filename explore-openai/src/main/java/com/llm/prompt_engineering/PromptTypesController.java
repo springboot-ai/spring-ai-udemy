@@ -4,6 +4,7 @@ import com.llm.dto.UserInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -26,6 +27,7 @@ public class PromptTypesController {
     public PromptTypesController(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
     }
+
 
     @Value("classpath:/prompt-templates/prompt_types/few_shot.st")
     private Resource fewShotPrompt;
@@ -76,14 +78,14 @@ public class PromptTypesController {
                 """;
 
         SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(fewShotPrompt);
-        var systemMessage = systemPromptTemplate.createMessage(Map.of("few_shot_prompts", fewShotExamples));
-
+        var systemMessage = systemPromptTemplate.createMessage((Map.of("few_shot_prompts", fewShotExamples)));
         var promptMessage = new Prompt(
                 List.of(
                         systemMessage,
                         new UserMessage(userInput.prompt())
                 )
         );
+
         var requestSpec = chatClient.prompt(promptMessage);
 
         var responseSpec = requestSpec.call();

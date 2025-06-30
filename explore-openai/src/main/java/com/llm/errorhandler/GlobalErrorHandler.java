@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.time.LocalDateTime;
@@ -18,35 +19,39 @@ import java.util.stream.Collectors;
 public class GlobalErrorHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalErrorHandler.class);
 
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleRequestBody(MethodArgumentNotValidException ex) {
-
-        List<FieldError> errorList = ex.getBindingResult().getFieldErrors();
-        String errorMessage = errorList.stream()
+    public ResponseEntity<Error> handleValidationErrors(MethodArgumentNotValidException ex) {
+        String errorMessage = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
                 .map(fieldError -> fieldError.getField() + " - " + fieldError.getDefaultMessage())
-                .sorted()
                 .collect(Collectors.joining(", "));
-        log.info("errorMessage : {} ", errorMessage);
-        var error = new Error(errorMessage, LocalDateTime.now(), HttpStatus.BAD_REQUEST.toString());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
 
-    @ExceptionHandler(MissingServletRequestPartException.class)
-    public ResponseEntity<?> handleRequestBody(MissingServletRequestPartException ex) {
+        var error = new Error(
+                errorMessage,
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.toString()
+        );
 
-        log.info("errorMessage : {} ", ex.getMessage());
-        var error = new Error(ex.getMessage(), LocalDateTime.now(), HttpStatus.BAD_REQUEST.toString());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-    }
-
-    public record Error(String errorMessage, LocalDateTime timestamp, String status) {
+        log.error("Validation error : {} ", errorMessage);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGenericException(Exception ex) {
-        log.error("Unexpected error occurred: {}", ex.getMessage(), ex);
-        var error = new Error("An unexpected error occurred. Please try again later. Details: " + ex.getMessage(), LocalDateTime.now(), HttpStatus.INTERNAL_SERVER_ERROR.toString());
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<Error> handleAllExceptions(Exception ex) {
+        var error = new Error(
+                ex.getMessage(),
+                LocalDateTime.now(),
+                HttpStatus.INTERNAL_SERVER_ERROR.toString()
+        );
+
+        log.error("Unexpected error: ", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+
+    public record Error(String errorMessage, LocalDateTime timestamp, String status) {
     }
 }
 
