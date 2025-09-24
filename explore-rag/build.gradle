@@ -30,6 +30,10 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
 
 
+    //apache pdfbox
+    implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+
+
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
