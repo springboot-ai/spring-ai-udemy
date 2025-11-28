@@ -27,6 +27,15 @@ subprojects {
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
 
+
+    dependencies {
+        //actuator
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+        // micrometer prometheus for metrics
+        implementation 'io.micrometer:micrometer-registry-prometheus'
+    }
+
     ext {
         set('springAiVersion', "1.0.0")
     }
