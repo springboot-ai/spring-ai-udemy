@@ -38,3 +38,28 @@ spring:
             prompt: Extract text from the file.
 #            response-format: JSON
             model: "whisper-1" #"whisper-1", gpt-4o-mini-transcribe, gpt-4o-transcribe
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+        step: 5s
+  metrics:
+    distribution:
+      percentiles-histogram:
+        all: true
+    enable:
+      all: true
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: true
