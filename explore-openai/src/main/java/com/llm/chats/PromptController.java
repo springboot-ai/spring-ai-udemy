@@ -31,5 +31,4 @@ public class PromptController {
         this.chatClient = chatClientBuilder.build();
     }
 
-
 }
