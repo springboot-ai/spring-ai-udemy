@@ -1,6 +1,12 @@
 server:
   servlet:
     context-path: /springai
+
+logging:
+  level:
+    org:
+      springframework:
+        ai.chat.client.advisor.SimpleLoggingAdvisor: DEBUG
 weather:
   api-key :
   api-url : http://api.weatherapi.com/v1

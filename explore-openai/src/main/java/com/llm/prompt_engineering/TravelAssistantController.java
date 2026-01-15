@@ -1,6 +1,8 @@
 package com.llm.prompt_engineering;
 
 import com.llm.dto.UserInput;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -14,61 +16,56 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-
 @RestController
 public class TravelAssistantController {
 
-    private static final Logger log = LoggerFactory.getLogger(TravelAssistantController.class);
-    private final ChatClient chatClient;
+  private static final Logger log = LoggerFactory.getLogger(TravelAssistantController.class);
+  private final ChatClient chatClient;
 
-    @Value("classpath:/prompt-templates/travel_prompt.st")
-    private Resource travelPromptMessage;
+  @Value("classpath:/prompt-templates/travel_prompt.st")
+  private Resource travelPromptMessage;
 
-    public TravelAssistantController(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
-    }
+  public TravelAssistantController(ChatClient.Builder chatClientBuilder) {
+    this.chatClient = chatClientBuilder.build();
+  }
 
+  @PostMapping("/v1/travel_assistant")
+  public String prompts(@RequestBody UserInput userInput) {
+    log.info("userInput : {} ", userInput);
 
-    @PostMapping("/v1/travel_assistant")
-    public String prompts(@RequestBody UserInput userInput) {
-        log.info("userInput : {} ", userInput);
+    var promptMessage = new Prompt(
+        List.of(
+            new UserMessage(userInput.prompt())
+        )
+    );
+    var requestSpec = chatClient.prompt(promptMessage);
 
-        var promptMessage = new Prompt(
-                List.of(
-                        new UserMessage(userInput.prompt())
-                )
-        );
-        var requestSpec = chatClient.prompt(promptMessage);
+    var responseSpec = requestSpec.call();
+    return responseSpec.content();
+  }
 
-        var responseSpec = requestSpec.call();
-        return responseSpec.content();
-    }
+  @PostMapping("/v2/travel_assistant")
+  public String promptsv2(@RequestBody UserInput userInput) {
+    log.info("userInput : {} ", userInput);
 
-    @PostMapping("/v2/travel_assistant")
-    public String promptsv2(@RequestBody UserInput userInput) {
-        log.info("userInput : {} ", userInput);
+    var systemMessage = """
+      You are a professional travel planner with extensive knowledge of worldwide destinations,
+      including cultural attractions, accommodations, and travel logistics.
+      Provide better lodging options too that supports the family.
+      """;
 
-        var systemMessage = """
-                You are a professional travel planner with extensive knowledge of worldwide destinations,
-                including cultural attractions, accommodations, and travel logistics.
-                Provide better lodging options too that supports the family.
-                """;
+    PromptTemplate promptTemplate = new PromptTemplate(travelPromptMessage);
+    var message = promptTemplate.createMessage(Map.of("context", userInput.context(), "input", userInput.prompt()));
 
-        PromptTemplate promptTemplate = new PromptTemplate(travelPromptMessage);
-        var message = promptTemplate.createMessage(Map.of("context", userInput.context(), "input", userInput.prompt()));
+    var promptMessage = new Prompt(
+        new SystemMessage(systemMessage), // Sets the role
+        message
+    );
 
-        var promptMessage = new Prompt(
-                new SystemMessage(systemMessage), // Sets the role
-                message
-                );
+    log.info("promptMessage : {} ", promptMessage);
+    var requestSpec = chatClient.prompt(promptMessage);
 
-        log.info("promptMessage : {} ", promptMessage);
-        var requestSpec = chatClient.prompt(promptMessage);
-
-        var responseSpec = requestSpec.call();
-        return responseSpec.content();
-    }
-
+    var responseSpec = requestSpec.call();
+    return responseSpec.content();
+  }
 }

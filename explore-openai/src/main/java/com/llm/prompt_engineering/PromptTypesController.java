@@ -4,6 +4,8 @@ import com.llm.dto.UserInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -20,43 +22,45 @@ import java.util.Map;
 @RestController
 public class PromptTypesController {
 
-    private static final Logger log = LoggerFactory.getLogger(TravelAssistantController.class);
-    private final ChatClient chatClient;
+  private static final Logger log = LoggerFactory.getLogger(TravelAssistantController.class);
+  private final ChatClient chatClient;
 
-    public PromptTypesController(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
-    }
+  public PromptTypesController(ChatClient.Builder chatClientBuilder) {
+    this.chatClient = chatClientBuilder.build();
+  }
 
-    @Value("classpath:/prompt-templates/prompt_types/multi_step_prompt_1.st")
-    private Resource multiStep1;
+  @Value("classpath:/prompt-templates/prompt_types/few_shot.st")
+  private Resource fewShotPrompting;
 
-    @Value("classpath:/prompt-templates/prompt_types/multi_step_prompt_2.st")
-    private Resource multiStep2;
+  @Value("classpath:/prompt-templates/prompt_types/multi_step_prompt_1.st")
+  private Resource multiStep1;
 
+  @Value("classpath:/prompt-templates/prompt_types/multi_step_prompt_2.st")
+  private Resource multiStep2;
 
-    @PostMapping("/v1/prompt_types/zero_shot")
-    public String zeroShot(@RequestBody UserInput userInput) {
-        log.info("userInput : {} ", userInput);
+  @PostMapping("/v1/prompt_types/zero_shot")
+  public String zeroShot(@RequestBody UserInput userInput) {
+    log.info("userInput : {} ", userInput);
 
-        var promptMessage = new Prompt(
-                List.of(
-                        new UserMessage(userInput.prompt())
-                )
-        );
-        var requestSpec = chatClient.prompt(promptMessage);
+    var promptMessage = new Prompt(
+        List.of(
+            new UserMessage(userInput.prompt())
+        )
+    );
+    var requestSpec = chatClient.prompt(promptMessage);
 
-        var responseSpec = requestSpec.call();
-        return responseSpec.content();
-    }
+    var responseSpec = requestSpec.call();
+    return responseSpec.content();
+  }
 
-    //   happy
-    // unhappy
+  //   happy
+  // unhappy
 
-    @PostMapping("/v1/prompt_types/few_shot")
-    public String fewShot(@RequestBody UserInput userInput) {
-        log.info("userInput : {} ", userInput);
+  @PostMapping("/v1/prompt_types/few_shot")
+  public String fewShot(@RequestBody UserInput userInput) {
+    log.info("userInput : {} ", userInput);
 
-        var fewShotExamples = """
+    var fewShotExamples = """
                 Prompt : "The product arrived quickly, worked perfectly, and exceeded my expectations!"
                 Answer : happy
                 
@@ -71,46 +75,49 @@ public class PromptTypesController {
                 
                 """;
 
-        var promptMessage = new Prompt(
-                List.of(
-                        new UserMessage(userInput.prompt())
-                )
-        );
+    SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(fewShotPrompting);
+    var systemMessage = systemPromptTemplate.create(Map.of("few_shot_prompts", fewShotExamples));
 
-        var requestSpec = chatClient.prompt(promptMessage);
+    var promptMessage = new Prompt(
+        (Message) List.of(systemMessage,
+            new UserMessage(userInput.prompt())
+        )
+    );
 
-        var responseSpec = requestSpec.call();
-        return responseSpec.content();
-    }
+    var requestSpec = chatClient.prompt(promptMessage);
 
-    @PostMapping("/v1/prompt_types/cot")
-    public String cot(@RequestBody UserInput userInput) {
-        log.info("userInput : {} ", userInput);
+    var responseSpec = requestSpec.call();
+    return responseSpec.content();
+  }
 
-        var promptMessage = new Prompt(
-                List.of(
-                        new UserMessage(userInput.prompt())
-                )
-        );
-        var requestSpec = chatClient.prompt(promptMessage);
+  @PostMapping("/v1/prompt_types/cot")
+  public String cot(@RequestBody UserInput userInput) {
+    log.info("userInput : {} ", userInput);
 
-        var responseSpec = requestSpec.call();
-        return responseSpec.content();
-    }
+    var promptMessage = new Prompt(
+        List.of(
+            new UserMessage(userInput.prompt())
+        )
+    );
+    var requestSpec = chatClient.prompt(promptMessage);
 
-    @PostMapping("/v1/prompt_types/multi_step")
-    public String multistep_1(@RequestBody UserInput userInput) {
-        log.info("userInput : {} ", userInput);
-        PromptTemplate promptTemplate = new PromptTemplate(multiStep1);
-//        PromptTemplate promptTemplate = new PromptTemplate(multiStep2);
-        var message = promptTemplate.createMessage(Map.of("input", userInput.prompt()));
-        log.info("prompt : {} ",message.getText());
-        var promptMessage = new Prompt(
-                List.of(message)
-        );
-        var requestSpec = chatClient.prompt(promptMessage);
+    var responseSpec = requestSpec.call();
+    return responseSpec.content();
+  }
 
-        var responseSpec = requestSpec.call();
-        return responseSpec.content();
-    }
+  @PostMapping("/v1/prompt_types/multi_step")
+  public String multistep_1(@RequestBody UserInput userInput) {
+    log.info("userInput : {} ", userInput);
+    PromptTemplate promptTemplate = new PromptTemplate(multiStep1);
+//  PromptTemplate promptTemplate = new PromptTemplate(multiStep2);
+    var message = promptTemplate.createMessage(Map.of("input", userInput.prompt()));
+    log.info("prompt : {} ",message.getText());
+    var promptMessage = new Prompt(
+        List.of(message)
+    );
+    var requestSpec = chatClient.prompt(promptMessage);
+
+    var responseSpec = requestSpec.call();
+    return responseSpec.content();
+  }
 }

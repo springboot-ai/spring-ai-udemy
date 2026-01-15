@@ -12,31 +12,48 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class AdvisorsChatController {
-    private static final Logger log = LoggerFactory.getLogger(AdvisorsChatController.class);
+  private static final Logger log = LoggerFactory.getLogger(AdvisorsChatController.class);
 
-    private final ChatClient chatClient;
+  private final ChatClient chatClient;
 
-    public AdvisorsChatController(ChatClient.Builder chatClientBuilder, OpenAiChatModel openAiChatModel) {
-        this.chatClient = chatClientBuilder
-                .build();
-    }
+  public AdvisorsChatController(ChatClient.Builder chatClientBuilder, OpenAiChatModel openAiChatModel) {
+    this.chatClient = chatClientBuilder
+        .build();
+  }
 
-    @PostMapping("/v1/advisors")
-    public String advisors(@RequestBody UserInput userInput) {
+  @PostMapping("/v1/advisors")
+  public String advisors(@RequestBody UserInput userInput) {
 
-        var systemMessage = """
-                You are a helpful assistant, who can answer java based questions.
-                For any other questions, please respond with I don't know in a funny way!
-                """;
+    var systemMessage = """
+      You are a helpful assistant, who can answer java based questions.
+      For any other questions, please respond with I don't know in a funny way!
+      """;
 
-        var responseSpec = chatClient
-                .prompt()
-                .user(userInput.prompt())
-                .system(systemMessage)
-                .call();
+    var responseSpec = chatClient
+        .prompt()
+        .user(userInput.prompt())
+        .system(systemMessage)
+        .call();
 
-        log.info("responseSpec : {} ", responseSpec);
-        return responseSpec.content();
-    }
+    log.info("responseSpec : {} ", responseSpec);
+    return responseSpec.content();
+  }
 
+  @PostMapping("/v1/advisors/custom")
+  public String customAdvisors(@RequestBody UserInput userInput) {
+
+    var systemMessage = """
+      You are a helpful assistant, who can answer java based questions.
+      For any other questions, please respond with I don't know in a funny way!
+      """;
+
+    var responseSpec = chatClient
+        .prompt()
+        .user(userInput.prompt())
+        .system(systemMessage)
+        .call();
+
+    log.info("responseSpec : {} ", responseSpec);
+    return responseSpec.content();
+  }
 }
