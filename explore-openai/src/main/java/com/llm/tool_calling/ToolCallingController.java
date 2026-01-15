@@ -5,6 +5,7 @@ import com.llm.tool_calling.currenttime.DateTimeTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -45,7 +46,11 @@ public class ToolCallingController {
 //        .call()
 //        .content();
 
-    var requestSpec = chatClient.prompt().user(userInput.prompt()).toolCallbacks(tools);
+    var requestSpec = chatClient
+        .prompt()
+        .user(userInput.prompt())
+        .advisors(new SimpleLoggerAdvisor())
+        .toolCallbacks(tools);
 
     log.info("requestSpec: {} ", requestSpec);
 
